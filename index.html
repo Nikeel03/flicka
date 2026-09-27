@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeezaFlick Controller</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card: #0a0a0a;
+      --card-border: #1a1a1a;
+      --text-main: #ededed;
+      --text-muted: #737373;
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.25);
+      --switch-track: #171717;
+      --switch-thumb: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      background-color: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .login-form[hidden],
+    .control-card[hidden] {
+      display: none;
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      background: #0d0d0d;
+      color: var(--text-main);
+      font: inherit;
+    }
+
+    .login-form button {
+      padding: 12px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #000;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .login-form button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background: #111111;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      margin-top: 8px;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.3s ease;
+    }
+
+    /* Control Card */
+    .control-card {
+      background: #0d0d0d;
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.3s ease;
+    }
+
+    .control-card:focus-within {
+      border-color: #2e2e2e;
+    }
+
+    .geyser-card {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .geyser-main,
+    .timer-settings {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .timer-settings label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .timer-settings select {
+      min-width: 128px;
+      padding: 8px;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      background: #111111;
+      color: var(--text-main);
+      font: inherit;
+    }
+
+    .timer-label {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-warning {
+      color: #d6a25f;
+      font-size: 0.7rem;
+      line-height: 1.4;
+    }
+
+    .info h2 {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      margin-bottom: 3px;
+    }
+
+    .info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Modern Sliding Pill Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 64px;
+      height: 36px;
+      cursor: pointer;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background-color: var(--switch-track);
+      border: 1px solid #262626;
+      border-radius: 36px;
+      transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Sliding Knob with Fluid Spring Geometry */
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 28px;
+      width: 28px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--switch-thumb);
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  width 0.2s ease,
+                  background-color 0.3s ease;
+    }
+
+    /* Stretch slightly while tapping/holding */
+    .switch:active .slider:before {
+      width: 34px;
+    }
+
+    /* Active Checked State */
+    input:checked + .slider {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(28px);
+      background-color: #000000;
+    }
+
+    .switch:active input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    input:disabled + .slider {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>GeezaFlick</h1>
+      <div id="connection-status" class="status-badge">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Sign in</span>
+      </div>
+    </div>
+
+    <form id="login-form" class="login-form">
+      <input id="email" type="email" autocomplete="username" placeholder="Firebase email" aria-label="Firebase email" required />
+      <input id="password" type="password" autocomplete="current-password" placeholder="Firebase password" aria-label="Firebase password" required />
+      <button id="login-button" type="submit">Sign in</button>
+    </form>
+
+    <!-- LED Card -->
+    <div class="control-card" id="led-card" hidden>
+      <div class="info">
+        <h2>Board LED</h2>
+        <p id="led-label">State: Syncing...</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="led-toggle" disabled />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Breaker / Servo Card -->
+    <div class="control-card geyser-card" id="servo-card" hidden>
+      <div class="geyser-main">
+        <div class="info">
+          <h2>Geyser Breaker</h2>
+          <p id="servo-label">State: Syncing...</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="servo-toggle" disabled />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="timer-settings">
+        <label for="geyser-duration">Auto-off after</label>
+        <select id="geyser-duration" disabled>
+          <option value="30">30 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="90">1 hour 30 minutes</option>
+          <option value="120" selected>2 hours</option>
+          <option value="180">3 hours</option>
+          <option value="240">4 hours</option>
+        </select>
+      </div>
+      <p class="timer-label" id="geyser-timer-label">Auto-off starts when switched on</p>
+      <p class="timer-warning">Keep this page open for auto-off. For unattended shutoff, the device itself needs a timer.</p>
+    </div>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
